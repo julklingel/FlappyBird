@@ -89,6 +89,86 @@ class Bird:
         return pygame.mask.from_surface(self.img)
 
 
+
+class Pipe:
+    GAP = 200
+    VEL = 5
+
+    def __init__(self, x):
+        self.x = x
+        self.height = 0
+        self.top = 0
+        self.bottom = 0
+        self.pipeTop = pygame.transform.flip(pipeImg, False, True)
+        self.pipeBottom = pipeImg
+
+        self.passed = False
+        self.setHeights()
+
+    def setHeights(self):
+        self.height = random.randrange(50, 450)
+        self.top = self.height - self.pipeTop.get_height()
+        self.bottom = self.height + self.GAP
+
+    def move(self):
+        self.x -= self.VEL
+
+    def draw(self, win):
+        win.blit(self.pipeTop, (self.x, self.top))
+        win.blit(self.pipeBottom, (self.x, self.bottom))
+
+    def collide(self, bird):
+        birdMask = bird.getMask()
+        topMask = pygame.mask.from_surface(self.pipeTop)
+        bottomMask = pygame.mask.from_surface(self.pipeBottom)
+
+        topOffset = (self.x - bird.x, self.top - round(bird.y)) # must be integers --> pygame masks documentation
+        bottomOffset = (self.x - bird.x, self.bottom - round(bird.y))
+
+        bPoint = birdMask.overlap(bottomMask, bottomOffset) # returns None if no overlap
+        tPoint = birdMask.overlap(topMask, topOffset)
+
+        if tPoint or bPoint:
+            return True
+
+        return False
+
+
+class Base:
+    VEL = 5 # same as pipe
+    WIDTH = baseImg.get_width()
+    IMG = baseImg
+
+    def __init__(self, y):
+        self.y = y
+        self.x1 = 0
+        self.x2 = self.WIDTH
+
+    def move(self):
+        self.x1 -= self.VEL
+        self.x2 -= self.VEL
+
+        if self.x1 + self.WIDTH < 0:
+            self.x1 = self.x2 + self.WIDTH
+
+        if self.x2 + self.WIDTH < 0:
+            self.x2 = self.x1 + self.WIDTH
+
+    def draw(self, win):
+        win.blit(self.IMG, (self.x1, self.y))
+        win.blit(self.IMG, (self.x2, self.y))
+
+
+
+
+
+
+
+
+
+
+
+
 def drawWindow(win, bird):
     win.blit(bgImg, (0, 0))
     bird.draw(win)
