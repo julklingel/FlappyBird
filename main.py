@@ -172,9 +172,16 @@ def drawWindow(win, bird, pipes, base, score):
 
     base.draw(win)
     bird.draw(win)
-    text = font.render("Score: " + str(score), 1, (255, 255, 255))
-    win.blit(text, (winWidth - 10 - text.get_width(), 10))
+    score = font.render("Score: " + str(score), 1, (255, 255, 255))
+    win.blit(score, (winWidth - 10 - score.get_width(), 10))
+
+
     pygame.display.update()
+
+
+def gameOver(win):
+    failMsg = font.render("You failed!", 1, (0, 0, 0))
+    win.blit(failMsg, (winWidth/2 - failMsg.get_width()/2, 200))
 
 
 def main():
@@ -207,7 +214,10 @@ def main():
         addPipe = False
         for pipe in pipes:
             if pipe.collide(bird):
-                pass
+                gameOver(win)
+                pygame.display.update()
+                pygame.time.delay(2100)
+                run = False
             if pipe.x + pipe.pipeTop.get_width() < 0:
                 pipeList.append(pipe)
 
@@ -224,7 +234,10 @@ def main():
             pipes.remove(pipe)
 
         if bird.y + bird.img.get_height() >= 730:
-            pass
+                gameOver(win)
+                pygame.display.update()
+                pygame.time.delay(2100)
+                run = False
 
         drawWindow(win, bird, pipes, base, score)
 
