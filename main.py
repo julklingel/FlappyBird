@@ -4,6 +4,8 @@ import time
 import os
 import random
 
+pygame.font.init()
+
 
 winWidth = 500
 winHeight = 800
@@ -18,6 +20,8 @@ baseImg = pygame.transform.scale2x(
     pygame.image.load(os.path.join("imgs", "base.png")))
 bgImg = pygame.transform.scale2x(
     pygame.image.load(os.path.join("imgs", "bg.png")))
+
+font = pygame.font.SysFont("comicsans", 50)
 
 
 class Bird:
@@ -89,17 +93,105 @@ class Bird:
         return pygame.mask.from_surface(self.img)
 
 
-def drawWindow(win, bird):
-    win.blit(bgImg, (0, 0))
+class Pipe:
+    GAP = 200
+    VEL = 5
+
+    def __init__(self, x):
+        self.x = x
+        self.height = 0
+        self.top = 0
+        self.bottom = 0
+        self.pipeTop = pygame.transform.flip(pipeImg, False, True)
+        self.pipeBottom = pipeImg
+
+        self.passed = False
+        self.setHeights()
+
+    def setHeights(self):
+        self.height = random.randrange(50, 450)
+        self.top = self.height - self.pipeTop.get_height()
+        self.bottom = self.height + self.GAP
+
+    def move(self):
+        self.x -= self.VEL
+
+    def draw(self, win):
+        win.blit(self.pipeTop, (self.x, self.top))
+        win.blit(self.pipeBottom, (self.x, self.bottom))
+
+    def collide(self, bird):
+        birdMask = bird.getMask()
+        topMask = pygame.mask.from_surface(self.pipeTop)
+        bottomMask = pygame.mask.from_surface(self.pipeBottom)
+
+        # must be integers --> pygame masks documentation
+        topOffset = (self.x - bird.x, self.top - round(bird.y))
+        bottomOffset = (self.x - bird.x, self.bottom - round(bird.y))
+
+        # returns None if no overlap
+        bPoint = birdMask.overlap(bottomMask, bottomOffset)
+        tPoint = birdMask.overlap(topMask, topOffset)
+
+        if tPoint or bPoint:
+            return True
+
+        return False
+
+
+class Base:
+    VEL = 5  # same as pipe
+    WIDTH = baseImg.get_width()
+    IMG = baseImg
+
+    def __init__(self, y):
+        self.y = y
+        self.x1 = 0
+        self.x2 = self.WIDTH
+
+    def move(self):
+        self.x1 -= self.VEL
+        self.x2 -= self.VEL
+
+        if self.x1 + self.WIDTH < 0:
+            self.x1 = self.x2 + self.WIDTH
+
+        if self.x2 + self.WIDTH < 0:
+            self.x2 = self.x1 + self.WIDTH
+
+    def draw(self, win):
+        win.blit(self.IMG, (self.x1, self.y))
+        win.blit(self.IMG, (self.x2, self.y))
+
+
+def drawWindow(win, bird, pipes, base, score):
+    win.blit(bgImg, (0, 0)),
+
+    for pipe in pipes:
+        pipe.draw(win)
+
+    base.draw(win)
     bird.draw(win)
+    score = font.render("Score: " + str(score), 1, (255, 255, 255))
+    win.blit(score, (winWidth - 10 - score.get_width(), 10))
+
+
     pygame.display.update()
+
+
+def gameOver(win):
+    failMsg = font.render("You failed!", 1, (0, 0, 0))
+    win.blit(failMsg, (winWidth/2 - failMsg.get_width()/2, 200))
 
 
 def main():
     bird = Bird(230, 350)
+    base = Base(730)
+    pipes = [Pipe(700)]
     win = pygame.display.set_mode((winWidth, winHeight))
     clock = pygame.time.Clock()
     run = True
+    score = 0
 
     while run:
         clock.tick(30)
@@ -116,7 +208,38 @@ def main():
                     bird.jump()
 
         bird.move()
-        drawWindow(win, bird)
+        base.move()
+
+        pipeList = []
+        addPipe = False
+        for pipe in pipes:
+            if pipe.collide(bird):
+                gameOver(win)
+                pygame.display.update()
+                pygame.time.delay(2100)
+                run = False
+            if pipe.x + pipe.pipeTop.get_width() < 0:
+                pipeList.append(pipe)
+
+            if not pipe.passed and pipe.x < bird.x:
+                pipe.passed = True
+                addPipe = True
+            pipe.move()
+
+        if addPipe:
+            score += 1
+            pipes.append(Pipe(700))
+
+        for pipe in pipeList:
+            pipes.remove(pipe)
+
+        if bird.y + bird.img.get_height() >= 730:
+                gameOver(win)
+                pygame.display.update()
+                pygame.time.delay(2100)
+                run = False
+
+        drawWindow(win, bird, pipes, base, score)
 
     pygame.quit()
     quit()
