@@ -215,6 +215,7 @@ def main():
         for pipe in pipes:
             if pipe.collide(bird):
                 gameOver(win)
+                
                 pygame.display.update()
                 pygame.time.delay(2100)
                 run = False
