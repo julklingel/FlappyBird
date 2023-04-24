@@ -19,6 +19,6 @@ To install and run the project on your local machine, please follow these steps:
 3. Install the project dependencies by running the following command in your terminal:
 
     ```
-    pip install -i
+    pip install -r requirements.txt 
     ```
 
