@@ -1,0 +1,6 @@
+autopep8==2.0.2
+GDAL==3.6.2
+neat-python==0.92
+protobuf==4.21.12
+pycodestyle==2.10.0
+pygame==2.3.0
